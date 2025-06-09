@@ -1,0 +1,67 @@
+name: Build macOS Application
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-mac:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Build application
+      run: |
+        pyinstaller stellaris_dlc_unlocker_mac.spec
+        
+    - name: Create DMG
+      run: |
+        # Установка create-dmg для создания DMG файла
+        brew install create-dmg
+        
+        # Создание DMG
+        create-dmg \
+          --volname "Stellaris DLC Unlocker" \
+          --volicon "UI/icons/stellaris.png" \
+          --window-pos 200 120 \
+          --window-size 600 300 \
+          --icon-size 100 \
+          --icon "Stellaris DLC Unlocker.app" 175 120 \
+          --hide-extension "Stellaris DLC Unlocker.app" \
+          --app-drop-link 425 120 \
+          "Stellaris-DLC-Unlocker-macOS.dmg" \
+          "dist/"
+          
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: stellaris-dlc-unlocker-macos
+        path: |
+          dist/Stellaris DLC Unlocker.app
+          Stellaris-DLC-Unlocker-macOS.dmg
+        retention-days: 90
+        
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: |
+          Stellaris-DLC-Unlocker-macOS.dmg
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
