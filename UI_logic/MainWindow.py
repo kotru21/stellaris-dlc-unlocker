@@ -608,12 +608,19 @@ class MainWindow(QMainWindow, ui_main.Ui_MainWindow):
             return extract_folder
         except Exception as e:
             print(f'Error while unzipping {e}')
-            self.errorexec(self.tr("Error while unzipping"), self.tr("Exit"), exitApp=True)
-
-    def finish(self):
+            self.errorexec(self.tr("Error while unzipping"), self.tr("Exit"), exitApp=True)    def finish(self):
         if self.lauch_game_checkbox.isChecked():
             try:
-                run('start steam://run/281990', shell=True, capture_output=True, text=True)
-            except:
+                import platform
+                system = platform.system()
+                
+                if system == "Windows":
+                    run('start steam://run/281990', shell=True, capture_output=True, text=True)
+                elif system == "Darwin":  # macOS
+                    run(['open', 'steam://run/281990'], capture_output=True, text=True)
+                elif system == "Linux":
+                    run(['xdg-open', 'steam://run/281990'], capture_output=True, text=True)
+            except Exception as e:
+                print(f"Error launching game: {e}")
                 pass
         self.close()

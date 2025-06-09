@@ -118,4 +118,3 @@ def reg_search(value_data, value_name):
         return launcher_path
     except:
         return None
-        return 0

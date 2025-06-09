@@ -19,8 +19,11 @@ added_files = [
 ]
 
 # Добавляем данные PyQt5
-pyqt5_datas = collect_data_files('PyQt5')
-added_files.extend(pyqt5_datas)
+try:
+    pyqt5_datas = collect_data_files('PyQt5')
+    added_files.extend(pyqt5_datas)
+except:
+    pass  # Игнорируем ошибки если PyQt5 данные недоступны
 
 # Скрытые импорты
 hidden_imports = [
@@ -90,11 +93,40 @@ exe = EXE(
     entitlements_file=None,
 )
 
+# Функция для конвертации PNG в ICNS если доступна Pillow
+def convert_png_to_icns():
+    try:
+        from PIL import Image
+        import os
+        
+        png_path = 'UI/icons/stellaris.png'
+        icns_path = 'UI/icons/stellaris.icns'
+        
+        if os.path.exists(png_path) and not os.path.exists(icns_path):
+            # Создаем ICNS из PNG
+            img = Image.open(png_path)
+            # Обеспечиваем размер 512x512 для лучшего качества
+            img = img.resize((512, 512), Image.Resampling.LANCZOS)
+            img.save(icns_path, format='ICNS')
+            return icns_path
+        elif os.path.exists(icns_path):
+            return icns_path
+        else:
+            return None
+    except ImportError:
+        return None
+    except Exception as e:
+        print(f"Warning: Could not convert icon: {e}")
+        return None
+
+# Пытаемся найти или создать иконку
+icon_path = convert_png_to_icns()
+
 # Создание приложения для macOS
 app = BUNDLE(
     exe,
     name='Stellaris DLC Unlocker.app',
-    icon=None,  # Временно убираем иконку для успешной сборки
+    icon=icon_path,  # Используем сконвертированную иконку если доступна
     bundle_identifier='com.stellaris.dlc.unlocker',
     version='2.21',
     info_plist={
